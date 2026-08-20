@@ -3,7 +3,7 @@ HISTSIZE=10000
 SAVEHIST=10000
 
 bindkey -e
-zstyle :compinstall filename '/home/jimbob/.zshrc'
+zstyle :compinstall filename '~/.zshrc'
 
 autoload -Uz compinit
 compinit
