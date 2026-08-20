@@ -9,13 +9,13 @@ local term = "kitty"
 local files = "nautilus"
 local apps = "hyprlauncher"
 
-hl.bind(mod .. " + R", hl.dsp.exec_cmd(apps)
+hl.bind(mod .. " + R", hl.dsp.exec_cmd(apps))
 hl.bind(mod .. " + T", hl.dsp.exec_cmd(term))
 
 hl.bind(mod .. " + F", hl.dsp.exec_cmd(files))
 hl.bind(mod .. " + L", hl.dsp.exec_cmd("command -v hyprshutdown >/dev/null 2>&1 && hyprshutdown || hyprctl dispatch 'hl.dsp.exit()'"))
 
-local hl.bind(mod .. " + C", hl.dsp.window.close())
+local closeWindow = hl.bind(mod .. " + C", hl.dsp.window.close())
 
 hl.bind(mod .. " + SPACE", hl.dsp.window.float({ action = "toggle" }))
 
