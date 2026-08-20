@@ -4,15 +4,14 @@
 
 local mod = "SUPER"
 
---- Apps ---
-local term = "kitty"
-local files = "nautilus"
-local apps = "hyprlauncher"
+hl.bind(mod .. " + W", hl.dsp.focus({ direction = "up" }))
+hl.bind(mod .. " + R", hl.dsp.exec_cmd("hyprlauncher"))
+hl.bind(mod .. " + T", hl.dsp.exec_cmd("kitty"))
 
-hl.bind(mod .. " + R", hl.dsp.exec_cmd(apps))
-hl.bind(mod .. " + T", hl.dsp.exec_cmd(term))
-
-hl.bind(mod .. " + F", hl.dsp.exec_cmd(files))
+hl.bind(mod .. " + A", hl.dsp.focus({ direction = "left" }))
+hl.bind(mod .. " + S", hl.dsp.focus({ direction = "down" }))
+hl.bind(mod .. " + D", hl.dsp.focus({ direction = "right"}))
+hl.bind(mod .. " + F", hl.dsp.exec_cmd("nautilus"))
 hl.bind(mod .. " + L", hl.dsp.exec_cmd("command -v hyprshutdown >/dev/null 2>&1 && hyprshutdown || hyprctl dispatch 'hl.dsp.exit()'"))
 
 hl.bind(mod .. " + Z", hl.dsp.layout("swapwithmaster"))
