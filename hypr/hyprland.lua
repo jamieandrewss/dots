@@ -1,3 +1,4 @@
+require("modules.autostart.lua")
 require("modules.animations.lua")
 require("modules.decorations.lua")
 require("modules.env.lua")
