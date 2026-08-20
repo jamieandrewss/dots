@@ -15,6 +15,7 @@ hl.bind(mod .. " + T", hl.dsp.exec_cmd(term))
 hl.bind(mod .. " + F", hl.dsp.exec_cmd(files))
 hl.bind(mod .. " + L", hl.dsp.exec_cmd("command -v hyprshutdown >/dev/null 2>&1 && hyprshutdown || hyprctl dispatch 'hl.dsp.exit()'"))
 
+hl.bind(mod .. " + Z", hl.dsp.layout("swapwithmaster"))
 local closeWindow = hl.bind(mod .. " + C", hl.dsp.window.close())
 
 hl.bind(mod .. " + SPACE", hl.dsp.window.float({ action = "toggle" }))
