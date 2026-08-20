@@ -1,10 +1,10 @@
-require("modules/animations.lua")
-require("modules/decorations.lua")
-require("modules/env.lua")
-require("modules/inputs.lua")
-require("modules/keybinds.lua")
-require("modules/monitors.lua")
-require("modules/window-rules.lua")
+require("modules.animations.lua")
+require("modules.decorations.lua")
+require("modules.env.lua")
+require("modules.inputs.lua")
+require("modules.keybinds.lua")
+require("modules.monitors.lua")
+require("modules.window-rules.lua")
 
 hl.config({
     misc = {
