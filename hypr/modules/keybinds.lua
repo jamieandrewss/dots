@@ -15,13 +15,13 @@ hl.bind(mod .. " + F", hl.dsp.exec_cmd("nautilus"))
 hl.bind(mod .. " + L", hl.dsp.exec_cmd("command -v hyprshutdown >/dev/null 2>&1 && hyprshutdown || hyprctl dispatch 'hl.dsp.exit()'"))
 
 hl.bind(mod .. " + Z", hl.dsp.layout("swapwithmaster"))
-local closeWindow = hl.bind(mod .. " + C", hl.dsp.window.close())
+hl.bind(mod .. " + C", hl.dsp.window.close())
 
 hl.bind(mod .. " + SPACE", hl.dsp.window.float({ action = "toggle" }))
 
 for i = 1, 10 do
     local key = i % 10
-    hl.bind(mod .. " + " .. key,	    hl.dsp.focus({ workspace = i }))
+    hl.bind(mod .. " + " .. key,	        hl.dsp.focus({ workspace = i }))
     hl.bind(mod .. " + SHIFT + " .. key,    hl.dsp.window.move({ workspace = i }))
 end
 

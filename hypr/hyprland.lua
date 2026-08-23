@@ -4,6 +4,7 @@ require("modules.decorations")
 require("modules.env")
 require("modules.inputs")
 require("modules.keybinds")
+require("modules.layouts")
 require("modules.monitors")
 require("modules.window-rules")
 
