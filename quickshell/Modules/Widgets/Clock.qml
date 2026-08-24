@@ -1,6 +1,8 @@
 import QtQuick
 import Quickshell
 
+import qs.Common
+
 Item {
     id: root
 
@@ -15,9 +17,9 @@ Item {
         text: Qt.formatDateTime(clock.date, "hh:mm")
 
         font {
-            family: "AnnotationM Nerd Font Mono"
+            family: Theme.fonts.monospace
             pointSize: 14
-            weight: 600
+            weight: 700
         }
 
     }

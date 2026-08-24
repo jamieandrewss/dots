@@ -2,7 +2,6 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import Quickshell.Widgets
-
 import qs.Common
 
 Item {
@@ -15,7 +14,6 @@ Item {
     property string artist: ""
     property string artwork: ""
     property string status: "Stopped"
-
     property real position: 0
     property real length: 0
 
@@ -48,7 +46,6 @@ Item {
                 root.artist = parts[1] || ""
                 root.artwork = parts[2] || ""
                 root.status = parts[3] || "Stopped"
-
                 root.position = (parseFloat(parts[4]) || 0) / 1000000
                 root.length = (parseFloat(parts[5]) || 0) / 1000000
             }
@@ -67,44 +64,19 @@ Item {
     }
 
     Process {
-        id: playPauseProcess
-
-        command: [
-            "playerctl",
-            "--player=spotify",
-            "play-pause"
-        ]
+        id: playerctlProcess
     }
 
-    Process {
-        id: previousProcess
-
-        command: [
+    function playerctl(action) {
+        playerctlProcess.exec([
             "playerctl",
             "--player=spotify",
-            "previous"
-        ]
-    }
-
-    Process {
-        id: nextProcess
-
-        command: [
-            "playerctl",
-            "--player=spotify",
-            "next"
-        ]
+            action
+        ])
     }
 
     Process {
         id: seekProcess
-
-        command: [
-            "playerctl",
-            "--player=spotify",
-            "position",
-            "0"
-        ]
     }
 
     Rectangle {
@@ -112,7 +84,6 @@ Item {
 
         implicitWidth: 450
         implicitHeight: 170
-
         radius: 17.5
         color: "white"
 
@@ -130,7 +101,6 @@ Item {
             }
 
             radius: 12
-
             color: "#d9d9d9"
 
             Image {
@@ -139,7 +109,6 @@ Item {
                 source: root.artwork
 
                 fillMode: Image.PreserveAspectCrop
-
                 asynchronous: true
                 cache: true
             }
@@ -153,7 +122,6 @@ Item {
                 right: parent.right
                 top: parent.top
                 bottom: parent.bottom
-
                 leftMargin: 27
                 rightMargin: 28
             }
@@ -210,9 +178,7 @@ Item {
                 }
 
                 height: 6
-
                 radius: height / 2
-
                 color: "white"
 
                 Rectangle {
@@ -232,7 +198,6 @@ Item {
                         : 0
 
                     radius: height / 2
-
                     color: "black"
 
                     Behavior on width {
@@ -248,7 +213,6 @@ Item {
                         right: parent.right
                         top: parent.top
                         bottom: parent.bottom
-
                         topMargin: -8
                         bottomMargin: -8
                     }
@@ -258,17 +222,14 @@ Item {
                             return
 
                         const percentage = mouse.x / width
-                        const newPosition =
-                            percentage * root.length
+                        const newPosition = percentage * root.length
 
-                        seekProcess.command = [
+                        seekProcess.exec([
                             "playerctl",
                             "--player=spotify",
                             "position",
                             newPosition.toString()
-                        ]
-
-                        seekProcess.running = true
+                        ])
                     }
                 }
             }
@@ -284,6 +245,7 @@ Item {
 
                 spacing: 18
 
+                // Previous
                 Item {
                     width: 38
                     height: 32
@@ -295,7 +257,6 @@ Item {
 
                         font.family: "Symbols Nerd Font"
                         font.pointSize: 16
-
                         color: "#303030"
 
                         scale: previousMouse.pressed
@@ -316,15 +277,15 @@ Item {
                         id: previousMouse
 
                         anchors.fill: parent
-
                         hoverEnabled: true
 
                         onClicked: {
-                            previousProcess.running = true
+                            root.playerctl("previous")
                         }
                     }
                 }
 
+                // Play / Pause
                 Item {
                     width: 42
                     height: 32
@@ -338,7 +299,6 @@ Item {
 
                         font.family: "Symbols Nerd Font"
                         font.pointSize: 20
-
                         color: "#303030"
 
                         scale: playPauseMouse.pressed
@@ -359,15 +319,15 @@ Item {
                         id: playPauseMouse
 
                         anchors.fill: parent
-
                         hoverEnabled: true
 
                         onClicked: {
-                            playPauseProcess.running = true
+                            root.playerctl("play-pause")
                         }
                     }
                 }
 
+                // Next
                 Item {
                     width: 38
                     height: 32
@@ -379,7 +339,6 @@ Item {
 
                         font.family: "Symbols Nerd Font"
                         font.pointSize: 16
-
                         color: "#303030"
 
                         scale: nextMouse.pressed
@@ -400,29 +359,14 @@ Item {
                         id: nextMouse
 
                         anchors.fill: parent
-
                         hoverEnabled: true
 
                         onClicked: {
-                            nextProcess.running = true
+                            root.playerctl("next")
                         }
                     }
                 }
             }
         }
-    }
-
-    function formatTime(seconds) {
-        if (!isFinite(seconds) || seconds < 0)
-            return "0:00"
-
-        const totalSeconds = Math.floor(seconds)
-
-        const minutes = Math.floor(totalSeconds / 60)
-        const remaining = totalSeconds % 60
-
-        return minutes + ":" +
-            (remaining < 10 ? "0" : "") +
-            remaining
     }
 }

@@ -36,18 +36,22 @@ PanelWindow {
         item: root
     }
 
-    // Main Dynamic Island
     Rectangle {
         id: root
 
+        /*
+         * Clock is always widget 0.
+         */
         property int currentWidget: 0
 
-        // Direction of the most recent transition.
-        // -1 = left
-        //  1 = right
         property int transitionDirection: 0
 
         property bool transitioning: false
+
+        /*
+         * Time before automatically returning to the clock.
+         */
+        property int widgetTimeout: 30000
 
         implicitWidth: Math.min(
             Math.max(
@@ -76,7 +80,6 @@ PanelWindow {
 
         clip: true
 
-        // Island Animations
         Behavior on implicitWidth {
             NumberAnimation {
                 duration: 300
@@ -91,7 +94,35 @@ PanelWindow {
             }
         }
 
-        // Widget Controller
+        /*
+         * Inactivity timer.
+         *
+         * This is restarted whenever the user interacts
+         * with the island.
+         */
+        Timer {
+            id: widgetTimeoutTimer
+
+            interval: root.widgetTimeout
+            repeat: false
+
+            onTriggered: {
+                if (root.currentWidget !== 0) {
+                    root.switchWidget(0, 1)
+                }
+            }
+        }
+
+        /*
+         * Restart the timeout countdown.
+         */
+        function resetWidgetTimeout() {
+            widgetTimeoutTimer.stop()
+
+            if (root.currentWidget !== 0)
+                widgetTimeoutTimer.start()
+        }
+
         Item {
             id: widgetContainer
 
@@ -141,7 +172,6 @@ PanelWindow {
             }
         }
 
-        // Widget Switcher
         function switchWidget(index, direction) {
             if (root.transitioning)
                 return
@@ -149,11 +179,18 @@ PanelWindow {
             if (index < 0 || index >= WidgetLoader.count)
                 return
 
-            if (index === root.currentWidget)
+            if (index === root.currentWidget) {
+                root.resetWidgetTimeout()
                 return
+            }
 
             root.transitioning = true
             root.transitionDirection = direction
+
+            /*
+             * Any widget switch counts as interaction.
+             */
+            root.resetWidgetTimeout()
 
             widgetLoader.opacity = 0
             widgetLoader.scale = 0.96
@@ -162,6 +199,13 @@ PanelWindow {
                 root.transitionDirection * 35
 
             root.currentWidget = index
+
+            /*
+             * If we switched to the clock, there is no
+             * reason for the timeout timer to remain active.
+             */
+            if (root.currentWidget === 0)
+                widgetTimeoutTimer.stop()
 
             Qt.callLater(function() {
                 widgetLoader.opacity = 1
@@ -191,7 +235,9 @@ PanelWindow {
             )
         }
 
-        // IPC
+        /*
+         * IPC
+         */
         IpcHandler {
             target: "island"
 
@@ -208,9 +254,12 @@ PanelWindow {
             }
         }
 
-        // Swipe Logic
+        /*
+         * Swipe Logic
+         */
         MouseArea {
             anchors.fill: parent
+            z: -1
 
             property real sx: 0
             property real sy: 0
@@ -218,19 +267,32 @@ PanelWindow {
             onPressed: function(mouse) {
                 sx = mouse.x
                 sy = mouse.y
+
+                /*
+                 * Pressing the island counts as activity.
+                 */
+                root.resetWidgetTimeout()
             }
 
             onReleased: function(mouse) {
                 const dx = mouse.x - sx
                 const dy = mouse.y - sy
 
-                // Ignore small movements.
-                if (Math.abs(dx) < 50)
+                /*
+                 * Ignore small movements.
+                 */
+                if (Math.abs(dx) < 50) {
+                    root.resetWidgetTimeout()
                     return
+                }
 
-                // Ignore mostly vertical swipes.
-                if (Math.abs(dx) < Math.abs(dy))
+                /*
+                 * Ignore mostly vertical swipes.
+                 */
+                if (Math.abs(dx) < Math.abs(dy)) {
+                    root.resetWidgetTimeout()
                     return
+                }
 
                 if (dx < 0) {
                     root.nextWidget()
@@ -241,49 +303,7 @@ PanelWindow {
         }
     }
 
-    // Workspace Identifier
-    Rectangle {
-        id: workspaceIndicator
-
-        width: Layout.islandMinHeight
-        height: 40
-
-        radius: 25
-
-        anchors {
-            right: root.left
-            rightMargin: 8
-            top: root.top
-        }
-
-        color: "white"
-
-        Text {
-            anchors.centerIn: parent
-
-            text: Hyprland.focusedWorkspace?.id ?? ""
-
-            font {
-                family: Theme.fonts.monospace
-                pointSize: 12
-                weight: Font.Bold
-            }
-
-            color: "black"
-        }
-
-        Behavior on width {
-            NumberAnimation {
-                duration: 200
-                easing.type: Easing.OutCubic
-            }
-        }
-
-        Behavior on height {
-            NumberAnimation {
-                duration: 200
-                easing.type: Easing.OutCubic
-            }
-        }
+    Workspace {
+        id: workspace
     }
 }
