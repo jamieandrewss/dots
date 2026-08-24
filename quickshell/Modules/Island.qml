@@ -1,7 +1,8 @@
 import QtQuick
 import Quickshell
-import Quickshell.Hyprland
+import Quickshell.Io
 import Quickshell.Wayland
+import Quickshell.Hyprland
 
 import qs.Common
 import qs.Services
@@ -12,33 +13,41 @@ PanelWindow {
     WlrLayershell.layer: WlrLayer.Overlay
     visible: !ScreenState.isFullscreen(monitor)
 
-    readonly property HyprlandMonitor monitor: Hyprland.monitorFor(screen)
+    readonly property HyprlandMonitor monitor:
+        Hyprland.monitorFor(screen)
 
     exclusiveZone: Layout.exclusive
 
-    anchors { top: true; left: true; right: true }
+    anchors {
+        top: true
+        left: true
+        right: true
+    }
 
-    margins { top: 10 }
+    margins {
+        top: 10
+    }
 
     implicitHeight: root.implicitHeight
 
     color: "#00000000"
 
-    mask: Region { item: root }
+    mask: Region {
+        item: root
+    }
 
-    // Main Island
+    // Main Dynamic Island
     Rectangle {
         id: root
 
         property int currentWidget: 0
 
-        // Direction of the most recent swipe.
+        // Direction of the most recent transition.
         // -1 = left
         //  1 = right
         property int transitionDirection: 0
 
-        // Used to trigger the widget animation.
-        property int transitionId: 0
+        property bool transitioning: false
 
         implicitWidth: Math.min(
             Math.max(
@@ -67,10 +76,7 @@ PanelWindow {
 
         clip: true
 
-        // =====================================================
-        // Island resizing
-        // =====================================================
-
+        // Island Animations
         Behavior on implicitWidth {
             NumberAnimation {
                 duration: 300
@@ -85,10 +91,7 @@ PanelWindow {
             }
         }
 
-        // =====================================================
-        // Widget container
-        // =====================================================
-
+        // Widget Controller
         Item {
             id: widgetContainer
 
@@ -107,7 +110,6 @@ PanelWindow {
                     )
 
                 opacity: 1
-
                 scale: 1
 
                 transform: Translate {
@@ -116,48 +118,97 @@ PanelWindow {
                     x: 0
                 }
 
-                // -------------------------------------------------
-                // Fade
-                // -------------------------------------------------
-
                 Behavior on opacity {
                     NumberAnimation {
                         duration: 180
-
                         easing.type: Easing.OutCubic
                     }
                 }
-
-                // -------------------------------------------------
-                // Scale
-                // -------------------------------------------------
 
                 Behavior on scale {
                     NumberAnimation {
                         duration: 250
-
                         easing.type: Easing.OutCubic
                     }
                 }
 
-                // -------------------------------------------------
-                // Slide
-                // -------------------------------------------------
-
                 Behavior on x {
                     NumberAnimation {
                         duration: 300
-
                         easing.type: Easing.OutCubic
                     }
                 }
             }
         }
 
-        // =====================================================
-        // Swipe detection
-        // =====================================================
+        // Widget Switcher
+        function switchWidget(index, direction) {
+            if (root.transitioning)
+                return
 
+            if (index < 0 || index >= WidgetLoader.count)
+                return
+
+            if (index === root.currentWidget)
+                return
+
+            root.transitioning = true
+            root.transitionDirection = direction
+
+            widgetLoader.opacity = 0
+            widgetLoader.scale = 0.96
+
+            widgetTranslation.x =
+                root.transitionDirection * 35
+
+            root.currentWidget = index
+
+            Qt.callLater(function() {
+                widgetLoader.opacity = 1
+                widgetLoader.scale = 1
+
+                widgetTranslation.x = 0
+
+                root.transitioning = false
+            })
+        }
+
+        function nextWidget() {
+            root.switchWidget(
+                WidgetLoader.nextIndex(
+                    root.currentWidget
+                ),
+                -1
+            )
+        }
+
+        function previousWidget() {
+            root.switchWidget(
+                WidgetLoader.previousIndex(
+                    root.currentWidget
+                ),
+                1
+            )
+        }
+
+        // IPC
+        IpcHandler {
+            target: "island"
+
+            function nextWidget(): void {
+                root.nextWidget()
+            }
+
+            function previousWidget(): void {
+                root.previousWidget()
+            }
+
+            function setWidget(index: int): void {
+                root.switchWidget(index, -1)
+            }
+        }
+
+        // Swipe Logic
         MouseArea {
             anchors.fill: parent
 
@@ -181,70 +232,11 @@ PanelWindow {
                 if (Math.abs(dx) < Math.abs(dy))
                     return
 
-                const oldWidget =
-                    root.currentWidget
-
-                let newWidget
-
-                // -------------------------------------------------
-                // Swipe left
-                // -------------------------------------------------
-
                 if (dx < 0) {
-                    newWidget =
-                        WidgetLoader.nextIndex(
-                            root.currentWidget
-                        )
-
-                    root.transitionDirection = -1
+                    root.nextWidget()
+                } else {
+                    root.previousWidget()
                 }
-
-                // -------------------------------------------------
-                // Swipe right
-                // -------------------------------------------------
-
-                else {
-                    newWidget =
-                        WidgetLoader.previousIndex(
-                            root.currentWidget
-                        )
-
-                    root.transitionDirection = 1
-                }
-
-                if (newWidget < 0)
-                    return
-
-                if (newWidget === oldWidget)
-                    return
-
-                // -------------------------------------------------
-                // Animate the current widget out
-                // -------------------------------------------------
-
-                widgetLoader.opacity = 0
-                widgetLoader.scale = 0.96
-
-                widgetTranslation.x =
-                    root.transitionDirection * 35
-
-                // -------------------------------------------------
-                // Change widget
-                // -------------------------------------------------
-
-                root.currentWidget = newWidget
-
-                // -------------------------------------------------
-                // Animate new widget in from the opposite side
-                // -------------------------------------------------
-
-                Qt.callLater(function() {
-                    widgetLoader.opacity = 1
-                    widgetLoader.scale = 1
-
-                    widgetTranslation.x =
-                        0
-                })
             }
         }
     }
@@ -272,7 +264,7 @@ PanelWindow {
             text: Hyprland.focusedWorkspace?.id ?? ""
 
             font {
-                family: "JetBrainsMono Nerd Font"
+                family: Theme.fonts.monospace
                 pointSize: 12
                 weight: Font.Bold
             }

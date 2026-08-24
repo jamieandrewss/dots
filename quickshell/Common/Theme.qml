@@ -1,8 +1,17 @@
 pragma Singleton
+pragma ComponentBehavior: Bound
 
+import QtQuick
 import Quickshell
 
 Singleton {
+    readonly property Fonts fonts: Fonts {}
+
+    component Fonts: QtObject {
+        readonly property string sserif:    "Noto Sans"
+        readonly property string monospace: "AnnotationM Nerd Font Mono"
+    }
+
     readonly property string bg:            "#FFF5F7"
     readonly property string surface:       "#FFE9EE"
     readonly property string surface_alt:   "#FFDDE5"

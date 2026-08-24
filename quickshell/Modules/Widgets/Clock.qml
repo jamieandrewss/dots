@@ -15,7 +15,7 @@ Item {
         text: Qt.formatDateTime(clock.date, "hh:mm")
 
         font {
-            family: "JetBrainsMono NF"
+            family: "AnnotationM Nerd Font Mono"
             pointSize: 14
             weight: 600
         }

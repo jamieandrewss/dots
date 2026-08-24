@@ -3,6 +3,8 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Widgets
 
+import qs.Common
+
 Item {
     id: root
 
@@ -16,10 +18,6 @@ Item {
 
     property real position: 0
     property real length: 0
-
-    // =========================================================
-    // Spotify metadata
-    // =========================================================
 
     Process {
         id: metadataProcess
@@ -51,7 +49,6 @@ Item {
                 root.artwork = parts[2] || ""
                 root.status = parts[3] || "Stopped"
 
-                // playerctl reports position/length in microseconds
                 root.position = (parseFloat(parts[4]) || 0) / 1000000
                 root.length = (parseFloat(parts[5]) || 0) / 1000000
             }
@@ -68,10 +65,6 @@ Item {
                 metadataProcess.running = true
         }
     }
-
-    // =========================================================
-    // Spotify controls
-    // =========================================================
 
     Process {
         id: playPauseProcess
@@ -114,10 +107,6 @@ Item {
         ]
     }
 
-    // =========================================================
-    // Music controller
-    // =========================================================
-
     Rectangle {
         id: musicControls
 
@@ -126,10 +115,6 @@ Item {
 
         radius: 17.5
         color: "white"
-
-        // =====================================================
-        // Album artwork
-        // =====================================================
 
         ClippingRectangle {
             id: albumArtwork
@@ -160,10 +145,6 @@ Item {
             }
         }
 
-        // =====================================================
-        // Track information
-        // =====================================================
-
         Item {
             id: trackInfo
 
@@ -176,10 +157,6 @@ Item {
                 leftMargin: 27
                 rightMargin: 28
             }
-
-            // -------------------------------------------------
-            // Title
-            // -------------------------------------------------
 
             Text {
                 id: title
@@ -195,16 +172,12 @@ Item {
 
                 font.pointSize: 13
                 font.weight: Font.Medium
-                font.family: "JetBrainsMono NF"
+                font.family: Theme.fonts.monospace
 
                 color: "black"
 
                 elide: Text.ElideRight
             }
-
-            // -------------------------------------------------
-            // Artist
-            // -------------------------------------------------
 
             Text {
                 id: artist
@@ -219,16 +192,12 @@ Item {
                 text: root.artist
 
                 font.pointSize: 11
-                font.family: "JetBrainsMono NF"
+                font.family: Theme.fonts.monospace
 
                 color: "gray"
 
                 elide: Text.ElideRight
             }
-
-            // -------------------------------------------------
-            // Progress bar
-            // -------------------------------------------------
 
             Rectangle {
                 id: progressBar
@@ -304,10 +273,6 @@ Item {
                 }
             }
 
-            // =================================================
-            // Playback controls
-            // =================================================
-
             Row {
                 id: controls
 
@@ -318,10 +283,6 @@ Item {
                 }
 
                 spacing: 18
-
-                // -------------------------------------------------
-                // Previous
-                // -------------------------------------------------
 
                 Item {
                     width: 38
@@ -363,10 +324,6 @@ Item {
                         }
                     }
                 }
-
-                // -------------------------------------------------
-                // Play / Pause
-                // -------------------------------------------------
 
                 Item {
                     width: 42
@@ -411,10 +368,6 @@ Item {
                     }
                 }
 
-                // -------------------------------------------------
-                // Next
-                // -------------------------------------------------
-
                 Item {
                     width: 38
                     height: 32
@@ -458,10 +411,6 @@ Item {
             }
         }
     }
-
-    // =========================================================
-    // Helpers
-    // =========================================================
 
     function formatTime(seconds) {
         if (!isFinite(seconds) || seconds < 0)
