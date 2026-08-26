@@ -12,6 +12,7 @@ PROMPT="%n@%m %~ %# "
 
 # Aliases
 alias la="ls -lah"
+alias lsblk="lsblk -o NAME,SIZE,MODEL,MOUNTPOINTS"
 
 # Plugins
 source ~/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh
