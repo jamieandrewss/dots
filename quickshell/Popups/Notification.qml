@@ -15,12 +15,97 @@ Item {
     opacity: 1
     scale: 1
 
+    // =========================================================
+    // Icon / image handling
+    // =========================================================
+
+    function resolvePath(path) {
+        if (!path || path === "")
+            return ""
+
+        if (
+            path.startsWith("file://") ||
+            path.startsWith("http://") ||
+            path.startsWith("https://") ||
+            path.startsWith("data:")
+        ) {
+            return path
+        }
+
+        if (path.startsWith("~/")) {
+            return "file://" +
+                   Quickshell.env("HOME") +
+                   path.substring(1)
+        }
+
+        if (path.startsWith("/"))
+            return "file://" + path
+
+        return ""
+    }
+
+    function isFilePath(path) {
+        if (!path || path === "")
+            return false
+
+        return (
+            path.startsWith("/") ||
+            path.startsWith("~/") ||
+            path.startsWith("file://") ||
+            path.startsWith("http://") ||
+            path.startsWith("https://")
+        )
+    }
+
+    readonly property string rawIcon: {
+        if (!root.notification)
+            return ""
+
+        // Prefer notification image.
+        if (
+            root.notification.image &&
+            root.notification.image !== ""
+        ) {
+            return root.notification.image
+        }
+
+        // Fall back to the application icon.
+        if (
+            root.notification.appIcon &&
+            root.notification.appIcon !== ""
+        ) {
+            return root.notification.appIcon
+        }
+
+        return ""
+    }
+
+    readonly property bool iconIsPath:
+        isFilePath(rawIcon)
+
+    readonly property string iconPath:
+        iconIsPath
+            ? resolvePath(rawIcon)
+            : ""
+
+    readonly property string iconName:
+        !iconIsPath
+            ? rawIcon
+            : ""
+
+    // =========================================================
+    // Timeout
+    // =========================================================
+
     Timer {
         id: expirationTimer
 
         interval: 5000
+
         repeat: false
-        running: root.notification !== null
+
+        running:
+            root.notification !== null
 
         onTriggered: {
             root.dismiss()
@@ -31,14 +116,17 @@ Item {
         id: expirationProgress
 
         target: expirationBar
+
         property: "width"
 
         from: popup.width
+
         to: 0
 
         duration: 5000
 
-        easing.type: Easing.Linear
+        easing.type:
+            Easing.Linear
     }
 
     Component.onCompleted: {
@@ -46,35 +134,56 @@ Item {
         scale = 0.96
 
         enterAnimation.start()
+
         expirationProgress.start()
+
         expirationTimer.restart()
     }
+
+    // =========================================================
+    // Enter animation
+    // =========================================================
 
     ParallelAnimation {
         id: enterAnimation
 
         NumberAnimation {
             target: root
+
             property: "opacity"
+
             to: 1
+
             duration: 200
-            easing.type: Easing.OutCubic
+
+            easing.type:
+                Easing.OutCubic
         }
 
         NumberAnimation {
             target: root
+
             property: "scale"
+
             to: 1
+
             duration: 250
-            easing.type: Easing.OutCubic
+
+            easing.type:
+                Easing.OutCubic
         }
     }
+
+    // =========================================================
+    // Dismiss
+    // =========================================================
 
     function dismiss() {
         if (!root.notification)
             return
 
         expirationTimer.stop()
+
         expirationProgress.stop()
 
         exitAnimation.start()
@@ -85,18 +194,28 @@ Item {
 
         NumberAnimation {
             target: root
+
             property: "opacity"
+
             to: 0
+
             duration: 150
-            easing.type: Easing.InCubic
+
+            easing.type:
+                Easing.InCubic
         }
 
         NumberAnimation {
             target: root
+
             property: "scale"
+
             to: 0.96
+
             duration: 150
-            easing.type: Easing.InCubic
+
+            easing.type:
+                Easing.InCubic
         }
 
         onFinished: {
@@ -105,29 +224,38 @@ Item {
         }
     }
 
+    // =========================================================
+    // Notification
+    // =========================================================
+
     ClippingRectangle {
         id: popup
 
         anchors.fill: parent
 
-        implicitHeight: content.implicitHeight + 30
+        implicitHeight:
+            content.implicitHeight + 30
 
         radius: 17.5
 
-        color: "#e5e5e5"
+        color:
+            "#e5e5e5"
 
         ClippingRectangle {
             id: notificationBody
 
             anchors {
                 fill: parent
+
                 margins: 1
+
                 bottomMargin: 3
             }
 
             radius: 16.5
 
-            color: "white"
+            color:
+                "white"
 
             Item {
                 id: content
@@ -136,13 +264,19 @@ Item {
                     left: parent.left
                     right: parent.right
                     top: parent.top
+
                     margins: 13
                 }
 
-                implicitHeight: Math.max(
-                    appIcon.height,
-                    textColumn.implicitHeight
-                )
+                implicitHeight:
+                    Math.max(
+                        appIcon.height,
+                        textColumn.implicitHeight
+                    )
+
+                // =================================================
+                // Icon
+                // =================================================
 
                 ClippingRectangle {
                     id: appIcon
@@ -156,111 +290,224 @@ Item {
                     }
 
                     radius: 10
-                    color: "#eeeeee"
+
+                    color:
+                        "#eeeeee"
+
+                    // ---------------------------------------------
+                    // Image/file icon
+                    // ---------------------------------------------
 
                     Image {
-                        anchors.fill: parent
+                        id: fileIcon
 
-                        source: {
-                            if (!root.notification)
-                                return ""
+                        anchors.fill:
+                            parent
 
-                            if (root.notification.image)
-                                return root.notification.image
+                        source:
+                            root.iconIsPath
+                                ? root.iconPath
+                                : ""
 
-                            return root.notification.appIcon
+                        fillMode:
+                            Image.PreserveAspectFit
+
+                        asynchronous:
+                            true
+
+                        cache:
+                            true
+
+                        visible:
+                            root.iconIsPath &&
+                            status === Image.Ready
+
+                        onStatusChanged: {
+                            if (
+                                status === Image.Error ||
+                                status === Image.Null
+                            ) {
+                                visible = false
+                            }
                         }
-
-                        fillMode: Image.PreserveAspectFit
-                        asynchronous: true
-                        cache: true
-
-                        visible: source !== ""
                     }
+
+                    // ---------------------------------------------
+                    // Normal application icon
+                    // ---------------------------------------------
+
+                    IconImage {
+                        id: applicationIcon
+
+                        anchors.fill:
+                            parent
+
+                        visible:
+                            !root.iconIsPath &&
+                            root.iconName !== ""
+
+                        source:
+                            !root.iconIsPath &&
+                            root.iconName !== ""
+                                ? root.iconName
+                                : ""
+
+                        asynchronous:
+                            true
+
+                        onStatusChanged: {
+                            if (
+                                status === Image.Error ||
+                                status === Image.Null
+                            ) {
+                                visible = false
+                            }
+                        }
+                    }
+
+                    // ---------------------------------------------
+                    // Bell fallback
+                    // ---------------------------------------------
 
                     Text {
-                        anchors.centerIn: parent
+                        id: bellIcon
 
-                        text: root.notification
-                            ? root.notification.appName
-                                .charAt(0)
-                                .toUpperCase()
-                            : "?"
+                        anchors.centerIn:
+                            parent
 
-                        font.pointSize: 16
-                        font.weight: Font.Medium
-                        color: "#555555"
+                        text:
+                            "󰂚"
 
-                        visible: !parent.children[0].visible
+                        font.family:
+                            "Symbols Nerd Font"
+
+                        font.pointSize:
+                            20
+
+                        color:
+                            "#555555"
+
+                        visible:
+                            !fileIcon.visible &&
+                            !applicationIcon.visible
                     }
                 }
+
+                // =================================================
+                // Text
+                // =================================================
 
                 Column {
                     id: textColumn
 
                     anchors {
-                        left: appIcon.right
-                        right: closeButton.left
-                        top: parent.top
+                        left:
+                            appIcon.right
+
+                        right:
+                            closeButton.left
+
+                        top:
+                            parent.top
+
                         leftMargin: 12
+
                         rightMargin: 10
                     }
 
                     spacing: 3
 
                     Text {
-                        width: parent.width
+                        width:
+                            parent.width
 
-                        text: root.notification
-                            ? root.notification.appName
-                            : ""
+                        text:
+                            root.notification
+                                ? root.notification.appName
+                                : ""
 
-                        font.pointSize: 9
-                        font.weight: Font.Medium
-                        font.family: Theme.fonts.monospace
+                        font.pointSize:
+                            9
 
-                        color: "#777777"
+                        font.weight:
+                            Font.Medium
 
-                        elide: Text.ElideRight
+                        font.family:
+                            Theme.fonts.monospace
+
+                        color:
+                            "#777777"
+
+                        elide:
+                            Text.ElideRight
                     }
 
                     Text {
-                        width: parent.width
+                        width:
+                            parent.width
 
-                        text: root.notification
-                            ? root.notification.summary
-                            : ""
+                        text:
+                            root.notification
+                                ? root.notification.summary
+                                : ""
 
-                        font.pointSize: 12
-                        font.weight: Font.Medium
-                        font.family: Theme.fonts.monospace
+                        font.pointSize:
+                            12
 
-                        color: "#202020"
+                        font.weight:
+                            Font.Medium
 
-                        wrapMode: Text.Wrap
-                        maximumLineCount: 2
-                        elide: Text.ElideRight
+                        font.family:
+                            Theme.fonts.monospace
+
+                        color:
+                            "#202020"
+
+                        wrapMode:
+                            Text.Wrap
+
+                        maximumLineCount:
+                            2
+
+                        elide:
+                            Text.ElideRight
                     }
 
                     Text {
-                        width: parent.width
+                        width:
+                            parent.width
 
-                        text: root.notification
-                            ? root.notification.body
-                            : ""
+                        text:
+                            root.notification
+                                ? root.notification.body
+                                : ""
 
-                        font.pointSize: 10
-                        font.family: Theme.fonts.monospace
+                        font.pointSize:
+                            10
 
-                        color: "#555555"
+                        font.family:
+                            Theme.fonts.monospace
 
-                        wrapMode: Text.Wrap
-                        maximumLineCount: 4
-                        elide: Text.ElideRight
+                        color:
+                            "#555555"
 
-                        visible: text !== ""
+                        wrapMode:
+                            Text.Wrap
+
+                        maximumLineCount:
+                            4
+
+                        elide:
+                            Text.ElideRight
+
+                        visible:
+                            text !== ""
                     }
                 }
+
+                // =================================================
+                // Close button
+                // =================================================
 
                 Item {
                     id: closeButton
@@ -269,34 +516,46 @@ Item {
                     height: 26
 
                     anchors {
-                        right: parent.right
-                        top: parent.top
+                        right:
+                            parent.right
+
+                        top:
+                            parent.top
                     }
 
                     z: 2
 
                     Text {
-                        anchors.centerIn: parent
+                        anchors.centerIn:
+                            parent
 
-                        text: "󰅖"
+                        text:
+                            "󰅖"
 
-                        font.family: "Symbols Nerd Font"
-                        font.pointSize: 14
+                        font.family:
+                            "Symbols Nerd Font"
 
-                        color: closeMouse.containsMouse
-                            ? "#202020"
-                            : "#888888"
+                        font.pointSize:
+                            14
 
-                        scale: closeMouse.pressed
-                            ? 0.9
-                            : closeMouse.containsMouse
-                                ? 1.1
-                                : 1.0
+                        color:
+                            closeMouse.containsMouse
+                                ? "#202020"
+                                : "#888888"
+
+                        scale:
+                            closeMouse.pressed
+                                ? 0.9
+                                : closeMouse.containsMouse
+                                    ? 1.1
+                                    : 1.0
 
                         Behavior on scale {
                             NumberAnimation {
                                 duration: 100
-                                easing.type: Easing.OutCubic
+
+                                easing.type:
+                                    Easing.OutCubic
                             }
                         }
                     }
@@ -304,9 +563,11 @@ Item {
                     MouseArea {
                         id: closeMouse
 
-                        anchors.fill: parent
+                        anchors.fill:
+                            parent
 
-                        hoverEnabled: true
+                        hoverEnabled:
+                            true
 
                         onClicked: {
                             root.dismiss()
@@ -315,8 +576,13 @@ Item {
                 }
             }
 
+            // =====================================================
+            // Click notification to dismiss
+            // =====================================================
+
             MouseArea {
-                anchors.fill: parent
+                anchors.fill:
+                    parent
 
                 z: 0
 
@@ -327,20 +593,32 @@ Item {
             }
         }
 
+        // =========================================================
+        // Expiration bar
+        // =========================================================
+
         Rectangle {
             id: expirationBar
 
             anchors {
-                left: parent.left
-                bottom: parent.bottom
+                left:
+                    parent.left
+
+                bottom:
+                    parent.bottom
             }
 
-            width: popup.width
-            height: 3
+            width:
+                popup.width
 
-            radius: 1.5
+            height:
+                3
 
-            color: "#303030"
+            radius:
+                1.5
+
+            color:
+                "#303030"
 
             z: 10
         }

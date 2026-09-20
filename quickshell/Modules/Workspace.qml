@@ -34,18 +34,4 @@ Rectangle {
 
         color: "black"
     }
-
-    Behavior on width {
-        NumberAnimation {
-            duration: 200
-            easing.type: Easing.OutCubic
-        }
-    }
-
-    Behavior on height {
-        NumberAnimation {
-            duration: 200
-            easing.type: Easing.OutCubic
-        }
-    }
 }

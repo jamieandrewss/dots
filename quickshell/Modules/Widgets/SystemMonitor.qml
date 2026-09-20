@@ -8,7 +8,7 @@ Item {
     id: root
 
     implicitWidth: 360
-    implicitHeight: 190
+    implicitHeight: 150
 
     property real cpuUsage: 0
     property real ramUsage: 0
@@ -287,15 +287,7 @@ Item {
 
             spacing: 10
 
-            Text {
-                text: "System Monitor"
-
-                font.family: Theme.fonts.monospace
-                font.pointSize: 13
-                font.weight: Font.Medium
-
-                color: "#202020"
-            }
+            
 
             Row {
                 width: parent.width

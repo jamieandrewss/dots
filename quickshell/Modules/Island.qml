@@ -11,12 +11,15 @@ PanelWindow {
     id: islandWindow
 
     WlrLayershell.layer: WlrLayer.Overlay
-    visible: !ScreenState.isFullscreen(monitor)
+
+    visible:
+        !ScreenState.isFullscreen(monitor)
 
     readonly property HyprlandMonitor monitor:
         Hyprland.monitorFor(screen)
 
-    exclusiveZone: Layout.exclusive
+    exclusiveZone:
+        Layout.exclusive
 
     anchors {
         top: true
@@ -28,100 +31,86 @@ PanelWindow {
         top: 10
     }
 
-    implicitHeight: root.implicitHeight
+    implicitHeight:
+        root.implicitHeight
 
-    color: "#00000000"
+    color:
+        "#00000000"
 
     mask: Region {
         item: root
     }
 
+    // =========================================================
+    // Main Dynamic Island
+    // =========================================================
+
     Rectangle {
         id: root
 
-        /*
-         * Clock is always widget 0.
-         */
         property int currentWidget: 0
 
+        // Direction of the most recent transition.
+        // -1 = left
+        //  1 = right
         property int transitionDirection: 0
 
         property bool transitioning: false
 
-        /*
-         * Time before automatically returning to the clock.
-         */
-        property int widgetTimeout: 30000
+        implicitWidth:
+            Math.min(
+                Math.max(
+                    widgetLoader.item?.implicitWidth ?? 0,
+                    Layout.islandMinWidth
+                ),
+                Layout.islandMaxWidth
+            )
 
-        implicitWidth: Math.min(
-            Math.max(
-                widgetLoader.item?.implicitWidth ?? 0,
-                Layout.islandMinWidth
-            ),
-            Layout.islandMaxWidth
-        )
-
-        implicitHeight: Math.min(
-            Math.max(
-                widgetLoader.item?.implicitHeight ?? 0,
-                Layout.islandMinHeight
-            ),
-            Layout.islandMaxHeight
-        )
+        implicitHeight:
+            Math.min(
+                Math.max(
+                    widgetLoader.item?.implicitHeight ?? 0,
+                    Layout.islandMinHeight
+                ),
+                Layout.islandMaxHeight
+            )
 
         anchors {
             top: parent.top
-            horizontalCenter: parent.horizontalCenter
+            horizontalCenter:
+                parent.horizontalCenter
         }
 
         radius: 17.5
 
-        color: "white"
+        color:
+            "white"
 
         clip: true
+
+        // =====================================================
+        // Island Animations
+        // =====================================================
 
         Behavior on implicitWidth {
             NumberAnimation {
                 duration: 300
-                easing.type: Easing.OutCubic
+                easing.type:
+                    Easing.OutCubic
             }
         }
 
         Behavior on implicitHeight {
             NumberAnimation {
                 duration: 300
-                easing.type: Easing.OutCubic
+                easing.type:
+                    Easing.OutCubic
             }
         }
 
-        /*
-         * Inactivity timer.
-         *
-         * This is restarted whenever the user interacts
-         * with the island.
-         */
-        Timer {
-            id: widgetTimeoutTimer
-
-            interval: root.widgetTimeout
-            repeat: false
-
-            onTriggered: {
-                if (root.currentWidget !== 0) {
-                    root.switchWidget(0, 1)
-                }
-            }
-        }
-
-        /*
-         * Restart the timeout countdown.
-         */
-        function resetWidgetTimeout() {
-            widgetTimeoutTimer.stop()
-
-            if (root.currentWidget !== 0)
-                widgetTimeoutTimer.start()
-        }
+        // =====================================================
+        // Widget Container
+        // =====================================================
 
         Item {
             id: widgetContainer
@@ -152,45 +141,50 @@ PanelWindow {
                 Behavior on opacity {
                     NumberAnimation {
                         duration: 180
-                        easing.type: Easing.OutCubic
+                        easing.type:
+                            Easing.OutCubic
                     }
                 }
 
                 Behavior on scale {
                     NumberAnimation {
                         duration: 250
-                        easing.type: Easing.OutCubic
+                        easing.type:
+                            Easing.OutCubic
                     }
                 }
 
                 Behavior on x {
                     NumberAnimation {
                         duration: 300
-                        easing.type: Easing.OutCubic
+                        easing.type:
+                            Easing.OutCubic
                     }
                 }
             }
         }
 
+        // =====================================================
+        // Widget Switching
+        // =====================================================
+
         function switchWidget(index, direction) {
             if (root.transitioning)
                 return
 
-            if (index < 0 || index >= WidgetLoader.count)
+            if (
+                index < 0 ||
+                index >= WidgetLoader.count
+            )
                 return
 
-            if (index === root.currentWidget) {
-                root.resetWidgetTimeout()
+            if (index === root.currentWidget)
                 return
-            }
 
             root.transitioning = true
-            root.transitionDirection = direction
 
-            /*
-             * Any widget switch counts as interaction.
-             */
-            root.resetWidgetTimeout()
+            root.transitionDirection =
+                direction
 
             widgetLoader.opacity = 0
             widgetLoader.scale = 0.96
@@ -198,14 +192,8 @@ PanelWindow {
             widgetTranslation.x =
                 root.transitionDirection * 35
 
-            root.currentWidget = index
-
-            /*
-             * If we switched to the clock, there is no
-             * reason for the timeout timer to remain active.
-             */
-            if (root.currentWidget === 0)
-                widgetTimeoutTimer.stop()
+            root.currentWidget =
+                index
 
             Qt.callLater(function() {
                 widgetLoader.opacity = 1
@@ -235,11 +223,13 @@ PanelWindow {
             )
         }
 
-        /*
-         * IPC
-         */
+        // =====================================================
+        // IPC
+        // =====================================================
+
         IpcHandler {
-            target: "island"
+            target:
+                "island"
 
             function nextWidget(): void {
                 root.nextWidget()
@@ -250,58 +240,60 @@ PanelWindow {
             }
 
             function setWidget(index: int): void {
-                root.switchWidget(index, -1)
+                root.switchWidget(
+                    index,
+                    -1
+                )
             }
         }
 
-        /*
-         * Swipe Logic
-         */
+        // =====================================================
+        // Swipe Logic
+        // =====================================================
+
         MouseArea {
             anchors.fill: parent
-            z: -1
 
             property real sx: 0
             property real sy: 0
 
-            onPressed: function(mouse) {
-                sx = mouse.x
-                sy = mouse.y
-
-                /*
-                 * Pressing the island counts as activity.
-                 */
-                root.resetWidgetTimeout()
-            }
-
-            onReleased: function(mouse) {
-                const dx = mouse.x - sx
-                const dy = mouse.y - sy
-
-                /*
-                 * Ignore small movements.
-                 */
-                if (Math.abs(dx) < 50) {
-                    root.resetWidgetTimeout()
-                    return
+            onPressed:
+                function(mouse) {
+                    sx = mouse.x
+                    sy = mouse.y
                 }
 
-                /*
-                 * Ignore mostly vertical swipes.
-                 */
-                if (Math.abs(dx) < Math.abs(dy)) {
-                    root.resetWidgetTimeout()
-                    return
-                }
+            onReleased:
+                function(mouse) {
+                    const dx =
+                        mouse.x - sx
 
-                if (dx < 0) {
-                    root.nextWidget()
-                } else {
-                    root.previousWidget()
+                    const dy =
+                        mouse.y - sy
+
+                    // Ignore small movements.
+                    if (Math.abs(dx) < 50)
+                        return
+
+                    // Ignore mostly vertical swipes.
+                    if (
+                        Math.abs(dx) <
+                        Math.abs(dy)
+                    )
+                        return
+
+                    if (dx < 0) {
+                        root.nextWidget()
+                    } else {
+                        root.previousWidget()
+                    }
                 }
-            }
         }
     }
+
+    // =========================================================
+    // Workspace
+    // =========================================================
 
     Workspace {
         id: workspace

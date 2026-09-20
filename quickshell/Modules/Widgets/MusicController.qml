@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import Quickshell.Widgets
+
 import qs.Common
 
 Item {
@@ -126,8 +127,9 @@ Item {
                 rightMargin: 28
             }
 
-            Text {
-                id: title
+            // --- Title: clips to the widget, marquees when the text overflows ---
+            Item {
+                id: titleClip
 
                 anchors {
                     left: parent.left
@@ -136,35 +138,118 @@ Item {
                     topMargin: 34
                 }
 
-                text: root.title
+                height: title.implicitHeight
+                clip: true
 
-                font.pointSize: 13
-                font.weight: Font.Medium
-                font.family: Theme.fonts.monospace
+                Text {
+                    id: title
 
-                color: "black"
+                    text: root.title
 
-                elide: Text.ElideRight
+                    font.pointSize: 13
+                    font.weight: Font.Medium
+                    font.family: Theme.fonts.monospace
+
+                    color: "black"
+
+                    property bool overflowing: implicitWidth > titleClip.width
+
+                    function resetMarquee() {
+                        titleMarquee.stop()
+                        title.x = 0
+                        if (title.overflowing)
+                            titleMarquee.start()
+                    }
+
+                    onTextChanged: resetMarquee()
+                    onOverflowingChanged: resetMarquee()
+                    Component.onCompleted: resetMarquee()
+
+                    SequentialAnimation {
+                        id: titleMarquee
+
+                        loops: Animation.Infinite
+
+                        PauseAnimation { duration: 400 }
+                        NumberAnimation {
+                            target: title
+                            property: "x"
+                            to: titleClip.width - title.implicitWidth
+                            duration: Math.max(400, (title.implicitWidth - titleClip.width) * 15)
+                            easing.type: Easing.InOutQuad
+                        }
+                        PauseAnimation { duration: 400 }
+                        NumberAnimation {
+                            target: title
+                            property: "x"
+                            to: 0
+                            duration: Math.max(400, (title.implicitWidth - titleClip.width) * 15)
+                            easing.type: Easing.InOutQuad
+                        }
+                    }
+                }
             }
 
-            Text {
-                id: artist
+            // --- Artist: same treatment as title ---
+            Item {
+                id: artistClip
 
                 anchors {
                     left: parent.left
                     right: parent.right
-                    top: title.bottom
+                    top: titleClip.bottom
                     topMargin: 5
                 }
 
-                text: root.artist
+                height: artist.implicitHeight
+                clip: true
 
-                font.pointSize: 11
-                font.family: Theme.fonts.monospace
+                Text {
+                    id: artist
 
-                color: "gray"
+                    text: root.artist
 
-                elide: Text.ElideRight
+                    font.pointSize: 11
+                    font.family: Theme.fonts.monospace
+
+                    color: "gray"
+
+                    property bool overflowing: implicitWidth > artistClip.width
+
+                    function resetMarquee() {
+                        artistMarquee.stop()
+                        artist.x = 0
+                        if (artist.overflowing)
+                            artistMarquee.start()
+                    }
+
+                    onTextChanged: resetMarquee()
+                    onOverflowingChanged: resetMarquee()
+                    Component.onCompleted: resetMarquee()
+
+                    SequentialAnimation {
+                        id: artistMarquee
+
+                        loops: Animation.Infinite
+
+                        PauseAnimation { duration: 400 }
+                        NumberAnimation {
+                            target: artist
+                            property: "x"
+                            to: artistClip.width - artist.implicitWidth
+                            duration: Math.max(400, (artist.implicitWidth - artistClip.width) * 15)
+                            easing.type: Easing.InOutQuad
+                        }
+                        PauseAnimation { duration: 400 }
+                        NumberAnimation {
+                            target: artist
+                            property: "x"
+                            to: 0
+                            duration: Math.max(400, (artist.implicitWidth - artistClip.width) * 15)
+                            easing.type: Easing.InOutQuad
+                        }
+                    }
+                }
             }
 
             Rectangle {
@@ -173,7 +258,7 @@ Item {
                 anchors {
                     left: parent.left
                     right: parent.right
-                    top: artist.bottom
+                    top: artistClip.bottom
                     topMargin: 8
                 }
 

@@ -30,42 +30,77 @@ QtObject {
     }
 
     /*
-     * Clock is ALWAYS index 0.
+     * Virtual widget ordering:
      *
-     * All other widgets are shifted down by one.
+     * 0 = Clock
+     * 1 = MusicController
+     * 2+ = Everything else
      */
     function getSourceIndex(index) {
-        if (index === 0)
-            return getWidgetIndex("Clock")
+        const clockIndex =
+            getWidgetIndex("Clock")
 
-        let clockIndex = getWidgetIndex("Clock")
-
-        if (clockIndex === -1)
-            return index
+        const musicIndex =
+            getWidgetIndex("MusicController")
 
         /*
-         * Since Clock occupies our virtual index 0,
-         * skip over its real FolderListModel index.
+         * Clock is always virtual index 0.
          */
-        let realIndex = index - 1
+        if (index === 0) {
+            return clockIndex
+        }
 
-        if (realIndex >= clockIndex)
-            realIndex++
+        /*
+         * MusicController is always virtual index 1.
+         */
+        if (index === 1) {
+            return musicIndex
+        }
 
-        return realIndex
+        /*
+         * Everything after Clock and MusicController
+         * comes from the remaining widgets.
+         */
+        let remainingIndex = index - 2
+
+        for (let i = 0; i < widgets.count; i++) {
+            const name =
+                widgets.get(i, "fileBaseName")
+
+            if (name === "Clock")
+                continue
+
+            if (name === "MusicController")
+                continue
+
+            if (remainingIndex === 0)
+                return i
+
+            remainingIndex--
+        }
+
+        return -1
     }
 
     function getComponent(index) {
         if (index < 0 || index >= count)
             return null
 
-        let realIndex = getSourceIndex(index)
+        const sourceIndex =
+            getSourceIndex(index)
 
-        if (realIndex < 0 || realIndex >= widgets.count)
+        if (
+            sourceIndex < 0 ||
+            sourceIndex >= widgets.count
+        ) {
             return null
+        }
 
         return Qt.createComponent(
-            widgets.get(realIndex, "fileUrl")
+            widgets.get(
+                sourceIndex,
+                "fileUrl"
+            )
         )
     }
 
@@ -76,13 +111,21 @@ QtObject {
         if (index === 0)
             return "Clock"
 
-        let realIndex = getSourceIndex(index)
+        if (index === 1)
+            return "MusicController"
 
-        if (realIndex < 0 || realIndex >= widgets.count)
+        const sourceIndex =
+            getSourceIndex(index)
+
+        if (
+            sourceIndex < 0 ||
+            sourceIndex >= widgets.count
+        ) {
             return ""
+        }
 
         return widgets.get(
-            realIndex,
+            sourceIndex,
             "fileBaseName"
         )
     }

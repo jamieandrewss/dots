@@ -9,7 +9,7 @@ hl.bind(mod .. " + E", hl.dsp.exec_cmd("qs ipc call island nextWidget"))
 hl.bind(mod .. " + R", hl.dsp.exec_cmd("hyprlauncher"))
 hl.bind(mod .. " + T", hl.dsp.exec_cmd("kitty"))
 
-hl.bind(mod .. " + S", hl.dsp.exec_cmd("hyprshot -zm region"))
+hl.bind(mod .. "+ SHIFT + S", hl.dsp.exec_cmd("hyprshot -zm region -o '~/.screenshots'"))
 hl.bind(mod .. " + F", hl.dsp.exec_cmd("nautilus"))
 hl.bind(mod .. " + L", hl.dsp.exec_cmd("command -v hyprshutdown >/dev/null 2>&1 && hyprshutdown || hyprctl dispatch 'hl.dsp.exit()'"))
 
